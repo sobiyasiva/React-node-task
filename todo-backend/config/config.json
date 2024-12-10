@@ -1,0 +1,38 @@
+{
+  "development": {
+    "username": "root",
+    "password": "sobi@123",
+    "database": "todo_db",
+    "host": "127.0.0.1",
+    "port": 3307,
+    "dialect": "mariadb",
+    "dialectOptions": {
+      "allowPublicKeyRetrieval": true,
+      "ssl": false
+    }
+  },
+  "test": {
+    "username": "root",
+    "password": "sobi@123",
+    "database": "todo_db",
+    "host": "127.0.0.1",
+    "port": 3307,
+    "dialect": "mariadb",
+    "dialectOptions": {
+      "allowPublicKeyRetrieval": true,
+      "ssl": false
+    }
+  },
+  "production": {
+    "username": "root",
+    "password": "sobi@123",
+    "database": "todo_db",
+    "host": "127.0.0.1",
+    "port": 3307,
+    "dialect": "mariadb",
+    "dialectOptions": {
+      "allowPublicKeyRetrieval": true,
+      "ssl": false
+    }
+  }
+}
