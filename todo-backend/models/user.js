@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
       // Define associations here if needed
     }
   }
-
+// hello
   User.init(
     {
       email: {
