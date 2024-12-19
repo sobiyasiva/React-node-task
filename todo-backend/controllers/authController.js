@@ -5,16 +5,21 @@ class AuthController {
   static async signup(req, res) {
     try {
       const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res
+          .status(400)
+          .json({ status: 'fail', message: 'Email and password are required' });
+      }
+
       const newUserResponse = await AuthService.signup(email, password);
 
-      // Return the structured response
-      res.status(201).json(newUserResponse);  // sends { status, message, data }
+      res.status(201).json(newUserResponse); // { status, message, data }
     } catch (error) {
-      console.error("Signup Error:", error);
+      console.error('Signup Error:', error);
       res.status(400).json({ status: 'fail', message: error.message });
     }
   }
-
   static async login(req, res) {
     try {
       const { email, password } = req.body;

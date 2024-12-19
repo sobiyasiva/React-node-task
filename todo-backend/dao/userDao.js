@@ -1,4 +1,4 @@
-const { User } = require('../models');
+const User = require('../models/user'); // Import the User model
 
 class UserDao {
   static async createUser(data) {
@@ -13,5 +13,5 @@ class UserDao {
     return await User.findByPk(id);
   }
 }
-// hello 
+
 module.exports = UserDao;
