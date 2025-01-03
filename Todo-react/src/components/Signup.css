@@ -1,0 +1,96 @@
+/* Signup.css */
+
+/* General container styling */
+.signup-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 13% auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-family: Arial, sans-serif;
+}
+
+.signup-container h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* Input field styling */
+.input-box {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.input-box:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+/* Password container styling */
+.password-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  font-size: 18px;
+}
+
+.toggle-password:focus {
+  outline: none;
+}
+
+/* Button styling */
+.signin-button, .back-to-login-button {
+  width: 100%;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.signin-button {
+  background-color: #007bff;
+  color: white;
+}
+
+.signin-button:hover {
+  background-color: #0056b3;
+}
+.back-to-login-link {
+  color: #007bff; /* Blue color */
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.back-to-login-link:hover {
+  color: #0056b3; /* Darker blue on hover */
+}
+
+
+/* Error message styling */
+.error-text {
+  color: #d9534f;
+  font-size: 14px;
+  margin-top: 10px;
+  text-align: center;
+}
