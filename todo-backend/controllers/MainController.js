@@ -19,49 +19,70 @@ class MainController {
       res.status(401).json({ status: 'fail', message: error.message });
     }
   }
-static async getTasks(req, res) {
-  try {
-    const userId = req.user?.id; // Extract user ID from authenticated request
-    const status = req.query.status || 'all'; // Default to 'all' if no status is specified
+  static async getTasks(req, res) {
+    try {
+      const userId = req.user?.id;
+      const status = req.query.status || 'all';
+  
+      if (!userId) {
+        return res.status(401).json({ status: 'fail', message: 'User not authenticated' });
+      }
+  
+      const tasks = await MainService.getTasks(userId, status);
+  
+      // Log to ensure you're receiving tasks just once
+      console.log('Fetched tasks:', tasks);
+  
+      if (tasks && tasks.length > 0) {
+        // Avoid sending multiple responses
+        if (!res.headersSent) {
+          return res.status(200).json({ status: 'success', data: tasks });
+        }
+      } else {
+        if (!res.headersSent) {
+          return res.status(404).json({ status: 'fail', message: 'No tasks found' });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching tasks in controller:', error.message);
+      if (!res.headersSent) {
+        return res.status(500).json({ status: 'fail', message: 'Could not fetch tasks' });
+      }
+    }
+  }
     
-    if (!userId) {
-      console.error('User ID not found in request. Unauthorized access.');
+  static async createTask(req, res) {
+  try {
+    console.log('Received request to create task:', req.body);
+
+    const authorizationHeader = req.headers.authorization; // Pass the Authorization header
+
+    // Ensure user is authenticated
+    if (!req.user || !req.user.id) {
       return res.status(401).json({ status: 'fail', message: 'User not authenticated' });
     }
 
-    const tasks = await MainService.getTasks(userId, status);
-    console.log('Tasks fetched successfully from service:', tasks);
+    const { taskName } = req.body;
+    const userId = req.user.id; // Assuming user is authenticated
 
-    res.status(200).json({ status: 'success', data: tasks });
+    // Check if taskName is provided and not empty
+    if (!taskName || taskName.trim() === '') {
+      return res.status(400).json({ status: 'fail', message: 'Task name cannot be empty' });
+    }
+
+    console.log('User ID:', userId);
+
+    const newTask = await MainService.createTask(userId, taskName, authorizationHeader);
+    console.log('Created task:', newTask);
+
+    res.status(201).json({ status: 'success', message: 'Task created successfully', data: newTask });
   } catch (error) {
-    console.error('Error fetching tasks in controller:', error.message, error.stack);
-    res.status(500).json({ status: 'fail', message: 'Could not fetch tasks' });
+    console.error('Error creating task:', error);
+    res.status(500).json({ status: 'fail', message: error.message });
   }
 }
-  static async createTask(req, res) {
-    try {
-      console.log('Received request to create task:', req.body);
 
-      const authorizationHeader = req.headers.authorization; // Pass the Authorization header
 
-      // Ensure user is authenticated
-      if (!req.user || !req.user.id) {
-        return res.status(401).json({ status: 'fail', message: 'User not authenticated' });
-      }
-
-      const { taskName } = req.body;
-      const userId = req.user.id; // Assuming user is authenticated
-      console.log('User ID:', userId);
-
-      const newTask = await MainService.createTask(userId, taskName, authorizationHeader);
-      console.log('Created task:', newTask);
-
-      res.status(201).json({ status: 'success', message: 'Task created successfully', data: newTask });
-    } catch (error) {
-      console.error('Error creating task:', error);
-      res.status(500).json({ status: 'fail', message: error.message });
-    }
-  }
 
   // Update an existing task for the authenticated user
 // Update an existing task for the authenticated user
@@ -84,11 +105,10 @@ static async updateTask(req, res) {
     const { taskName, status } = req.body; // Extract task name and status from the request body
     const { taskId } = req.params;  // Extract taskId from the request parameters
     const userId = req.user.id;    // User ID from the authenticated user
-    console.log('User ID:', userId);
 
     // Validate task name and task ID
-    if (!taskName) {
-      return res.status(400).json({ status: 'fail', message: 'Task name is required' });
+    if (!taskName || taskName.trim() === '') {
+      return res.status(400).json({ status: 'fail', message: 'Task name cannot be empty' });
     }
 
     if (!taskId) {
@@ -128,19 +148,37 @@ static async updateTask(req, res) {
 
 
 
+
   // Delete a task for the authenticated user
   static async deleteTask(req, res) {
     try {
-      const authorizationHeader = req.headers.authorization; // Pass the Authorization header
+      const authorizationHeader = req.headers.authorization;
       const { taskId } = req.params;
-      const userId = req.user.id; // Assuming user is authenticated
-      await MainService.deleteTask(userId, taskId, authorizationHeader);
+      const userId = req.user.id; // Authenticated user ID from middleware
+  
+      console.log(`Controller: Deleting task for user ID: ${userId}, Task ID: ${taskId}`);
+  
+      // Ensure the Authorization header is present
+      if (!authorizationHeader) {
+        return res.status(400).json({ status: 'fail', message: 'Authorization header is required' });
+      }
+  
+      // Call service to delete the task
+      const result = await MainService.deleteTask(userId, taskId, authorizationHeader);
+  
+      if (!result) {
+        return res.status(404).json({ status: 'fail', message: 'Task not found or you lack permission to delete it' });
+      }
+  
+      console.log('Controller: Task deleted successfully');
       res.status(200).json({ status: 'success', message: 'Task deleted successfully' });
     } catch (error) {
-      console.error('Error deleting task:', error);
+      console.error('Controller Error deleting task:', error.message);
       res.status(500).json({ status: 'fail', message: error.message });
     }
   }
-}
+  
+}  
+
 
 module.exports = MainController;

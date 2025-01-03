@@ -8,10 +8,10 @@ const crypto = require('crypto');
 const app = express();
 
 // Function to generate a secure token
-const generateToken = () => {
-  return crypto.randomBytes(64).toString('hex');
-};
-console.log(generateToken());
+// const generateToken = () => {
+//   return crypto.randomBytes(64).toString('hex');
+// };
+// console.log(generateToken());
 
 // Middleware for CORS
 console.log('Initializing CORS middleware...');

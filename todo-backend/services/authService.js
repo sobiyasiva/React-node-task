@@ -1,8 +1,9 @@
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto'); // For secure token generation
+const crypto = require('crypto');
 const UserDao = require('../dao/userDao');
 
-const SECRET_KEY = "a3f5c1eaa2834c1f92f0568abed83b4b9f0fcd8a7e5cbfed4fbd01dc5762c8ab"; // Replace with a secure key
+const SECRET_KEY = "a3f5c1eaa2834c1f92f0568abed83b4b9f0fcd8a7e5cbfed4fbd01dc5762c8ab"; 
+const REFRESH_SECRET_KEY = "e0a6c4bbd2484d92bba204a9057cb8c9c8d379a9e8367e2f9fa36b2b2467da9c"; 
 
 class AuthService {
   static async signup(email, password) {
@@ -10,17 +11,12 @@ class AuthService {
 
     const userExists = await UserDao.findUserByEmail(email);
     if (userExists) throw new Error('User already exists');
-
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await UserDao.createUser({ email, password: hashedPassword });
-
-    // Generate a secure token
-    const token = this.generateToken(newUser.id);
 
     return {
       status: 'success',
       message: 'User created successfully',
-      token,
       userId: newUser.id,
     };
   }
@@ -37,13 +33,14 @@ class AuthService {
         throw new Error('Incorrect password');
       }
 
-      // Generate a secure token
-      const token = this.generateToken(user.id);
+      const token = this.generateAccessToken(user.id);
+      const refreshToken = this.generateRefreshToken(user.id);
 
       return {
         status: 'success',
         message: 'Login successful',
         token,
+        refreshToken,
         userId: user.id,
       };
     } catch (error) {
@@ -51,43 +48,74 @@ class AuthService {
     }
   }
 
-  // Generate a secure token with userId and expiration
-  static generateToken(userId) {
-    const payload = {
-      userId,
-      exp: Date.now() + 3600000, // 1-hour expiration in milliseconds
-    };
-
-    // Create a unique signature for the token
+  static generateAccessToken(userId) {
+    const payload = { userId, exp: Date.now() + 3600000 }; // 1 hour expiration
     const data = `${userId}.${payload.exp}`;
     const signature = crypto.createHmac('sha256', SECRET_KEY).update(data).digest('hex');
-
-    // Return token in a simple format
     return `${userId}.${payload.exp}.${signature}`;
   }
 
-  // Helper function to verify the token
+  static generateRefreshToken(userId) {
+    const payload = { userId, exp: Date.now() + 86400000 }; // 1 day expiration
+    const data = `${userId}.${payload.exp}`;
+    const signature = crypto.createHmac('sha256', REFRESH_SECRET_KEY).update(data).digest('hex');
+    return `${userId}.${payload.exp}.${signature}`;
+  }
+
   static verifyToken(token) {
     const parts = token.split('.');
-    if (parts.length !== 3) {
-      throw new Error('Invalid token structure');
-    }
-
+    if (parts.length !== 3) throw new Error('Invalid token structure');
+    
     const [userId, exp, signature] = parts;
-
-    // Recreate the signature
     const expectedSignature = crypto.createHmac('sha256', SECRET_KEY).update(`${userId}.${exp}`).digest('hex');
-    if (expectedSignature !== signature) {
-      throw new Error('Invalid token');
-    }
-
-    // Check expiration
+    if (expectedSignature !== signature) throw new Error('Invalid token');
+    
     if (Date.now() > parseInt(exp, 10)) {
       throw new Error('Token expired');
     }
 
     return { userId: parseInt(userId, 10), exp: parseInt(exp, 10) };
   }
+
+  static verifyRefreshToken(token) {
+    const parts = token.split('.');
+    if (parts.length !== 3) throw new Error('Invalid token structure');
+    
+    const [userId, exp, signature] = parts;
+    const expectedSignature = crypto.createHmac('sha256', REFRESH_SECRET_KEY).update(`${userId}.${exp}`).digest('hex');
+    if (expectedSignature !== signature) throw new Error('Invalid refresh token');
+    
+    if (Date.now() > parseInt(exp, 10)) throw new Error('Refresh token expired');
+
+    return { userId: parseInt(userId, 10), exp: parseInt(exp, 10) };
+  }
+
+  // static async refreshAccessToken(refreshToken) {
+  //   try {
+  //     // Log for debugging
+  //     console.log('Received refresh token:', refreshToken);
+      
+  //     const { userId } = this.verifyRefreshToken(refreshToken);
+      
+  //     // Log userId extraction
+  //     console.log('Extracted userId from refresh token:', userId);
+  
+  //     const newAccessToken = this.generateAccessToken(userId);
+  
+  //     // Log the generated access token
+  //     console.log('Generated new access token:', newAccessToken);
+  
+  //     return {
+  //       status: 'success',
+  //       message: 'Access token refreshed successfully',
+  //       newAccessToken,
+  //     };
+  //   } catch (error) {
+  //     console.error('Error during refresh token processing:', error.message);
+  //     throw new Error(`Error during token refresh: ${error.message}`);
+  //   }
+  // }
+  
 }
 
 module.exports = AuthService;

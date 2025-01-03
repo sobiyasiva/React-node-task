@@ -11,60 +11,52 @@ class MainDAO {
       throw new Error(`Database error: ${error.message}`);
     }
   }
-  
 
-  // Get all tasks for a user
-// In MainDAO - Modify getTasks to accept a status parameter
+  // Get all tasks for a user with optional status filtering
+  // Get all tasks for a user with optional status filtering
+// Get all tasks for a user with optional status filtering
+// Get all tasks for a user with optional status filtering
 static async getTasks(userId, status = 'all') {
   try {
-    if (!userId || isNaN(userId)) {
-      throw new Error('Invalid userId passed to the query');
-    }
+    let query = `SELECT * FROM tasks WHERE user_id = ?`;
+    const replacements = [userId];
 
-    let query = `
-      SELECT * FROM tasks
-      WHERE user_id = ?
-    `;
-    
-    // If status is specified, filter tasks by status
     if (status !== 'all') {
       query += ` AND status = ?`;
+      replacements.push(status);
     }
-    
+
     query += ' ORDER BY createdAt DESC';
-    
-    const replacements = status === 'all' ? [userId] : [userId, status];
 
-    console.log('Preparing SQL Query:', query);
-    console.log('With replacements:', replacements);
-
-    const rows = await db.query(query, {
-      replacements,
-      type: db.QueryTypes.SELECT,
+    // Make sure to use let if the variable might be reassigned
+    let tasks = await db.query(query, {
+      replacements: replacements,
+      type: db.QueryTypes.SELECT
     });
 
-    console.log('SQL Query executed successfully. Retrieved rows:', rows);
-    return rows;
+    if (!Array.isArray(tasks)) {
+      tasks = [tasks]; // If it's not an array, wrap it in an array
+    }
+
+    console.log('SQL Query executed successfully. Retrieved rows:', tasks);
+    return tasks;
   } catch (error) {
-    console.error('Error executing SQL Query:', error.message, error.stack);
+    console.error('Error in DAO while fetching tasks:', error.message, error.stack);
     throw new Error('Error fetching tasks from database: ' + error.message);
   }
 }
 
-  
-  
-  
-  
-  
-  
+
+
+
 
   // Create a new task
 // Create a new task
 // Create a new task
-// Create a new task
-// In MainDAO
 static async createTask(userId, taskName) {
   try {
+    if (!userId || !taskName) throw new Error('User ID and Task Name are required');
+
     const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
     const query = `
@@ -75,7 +67,7 @@ static async createTask(userId, taskName) {
     const params = [
       userId,
       taskName,
-      'In-progress',  // Ensure task is created with 'In-progress' status
+      'In-progress', // Default status for a new task
       timestamp,
       timestamp,
     ];
@@ -83,14 +75,29 @@ static async createTask(userId, taskName) {
     console.log("SQL Query:", query);
     console.log("Query Parameters:", params);
 
-    const [result] = await db.query(query, { replacements: params });
+    // Execute the query with replacements and explicit INSERT type
+    const [result] = await db.query(query, {
+      replacements: params,
+      type: db.QueryTypes.INSERT, // Explicit type
+    });
 
-    // Return the created task
+    console.log('Raw query result:', result);
+
+    // Retrieve the `insertId` (handles different formats)
+    const insertId = typeof result === 'number' ? result : result.insertId || result[0]?.insertId || result.id;
+
+    if (!insertId) {
+      throw new Error('Failed to retrieve the insertId after task creation');
+    }
+
+    console.log('Task created successfully. Insert ID:', insertId);
+
+    // Return the created task with the correct `id`
     return {
-      id: result.insertId,
+      id: insertId, // Use retrieved insertId
       userId,
       taskName,
-      status: 'In-progress',  // Task status remains 'In-progress'
+      status: 'In-progress',
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -105,70 +112,69 @@ static async createTask(userId, taskName) {
 
 
 
-
-
-  
-  
-
   // Update an existing task
-// Update an existing task
-// Update an existing task with task name and optional status
-static async updateTask(userId, taskId, taskName, status) {
-  try {
-    console.log('Updating task for user:', userId, 'Task ID:', taskId, 'Task Name:', taskName, 'Status:', status);
-  
-    // Prepare the query to update the task (including taskName and status)
-    let query = `
-      UPDATE tasks
-      SET taskName = ?, updatedAt = NOW()
-    `;
-    
-    const params = [taskName];
-    
-    // If a status is provided, include it in the query
-    if (status) {
-      query += `, status = ?`;
-      params.push(status);  // Add status to the parameters
+  static async updateTask(userId, taskId, taskName, status) {
+    try {
+      console.log('Updating task for user:', userId, 'Task ID:', taskId, 'Task Name:', taskName, 'Status:', status);
+
+      if (!taskId || isNaN(taskId)) throw new Error('Invalid taskId provided');
+
+      let query = `UPDATE tasks SET taskName = ?, updatedAt = NOW()`;
+      const params = [taskName];
+
+      if (status) {
+        query += `, status = ?`;
+        params.push(status);
+      }
+
+      query += ` WHERE id = ? AND user_id = ?`;
+      params.push(taskId, userId);
+
+      console.log('SQL Query:', query);
+      console.log('Query Parameters:', params);
+
+      const [result] = await db.query(query, { replacements: params });
+
+      if (result.affectedRows === 0) {
+        console.error('Task not found or update failed for taskId:', taskId);
+        return null; // Task not found or not updated
+      }
+
+      return {
+        id: taskId,
+        userId,
+        taskName,
+        status: status || 'In-progress',
+        updatedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('Error updating task in the database:', error.message, error.stack);
+      throw new Error('Error updating task in the database: ' + error.message);
     }
-    
-    query += ` WHERE id = ? AND user_id = ?`;
-
-    // Add taskId and userId as the last parameters
-    params.push(taskId, userId);
-
-    const [result] = await db.query(query, {
-      replacements: params,
-      type: db.QueryTypes.UPDATE, // Explicitly specify the query type
-    });
-
-    // Check if any row was affected
-    if (result.affectedRows === 0) {
-      throw new Error('Task not found or you do not have permission to edit this task');
-    }
-  
-    // Return the updated task (or any relevant response data)
-    return { id: taskId, taskName, status: status || 'In-progress' };  // Default to 'In-progress' if no status is provided
-  } catch (error) {
-    console.error('Error updating task in the database:', error.message);
-    throw new Error('Error updating task: ' + error.message);
   }
-}
-
-
-
-
 
   // Delete a task
   static async deleteTask(userId, taskId) {
     try {
-      const [result] = await db.query(
-        'DELETE FROM tasks WHERE user_id = ? AND id = ?',
-        [userId, taskId]
-      );
+      console.log(`DAO: Attempting to delete task for user ID: ${userId}, Task ID: ${taskId}`);
+
+      if (!userId || isNaN(userId)) throw new Error('Invalid userId');
+      if (!taskId || isNaN(taskId)) throw new Error('Invalid taskId');
+
+      const query = 'DELETE FROM tasks WHERE user_id = ? AND id = ?';
+      const replacements = [userId, taskId];
+
+      const [result] = await db.query(query, { replacements });
+
       if (result.affectedRows === 0) {
-        throw new Error('Task not found or you do not have permission to delete this task');
+        console.error('Task not found or user lacks permission for taskId:', taskId);
+        return null; // Task not found or not deleted
       }
+
+      console.log('DAO: Task deleted successfully for taskId:', taskId);
+      return true;
     } catch (error) {
+      console.error('Error deleting task in the database:', error.message, error.stack);
       throw new Error('Error deleting task from the database: ' + error.message);
     }
   }
