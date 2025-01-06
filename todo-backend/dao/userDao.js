@@ -1,4 +1,4 @@
-const User = require('../models/user'); // Import the User model
+const User = require('../models/user'); 
 
 class UserDao {
   static async createUser(data) {
