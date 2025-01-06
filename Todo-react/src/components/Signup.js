@@ -42,7 +42,7 @@ const Signup = ({ setShowLogin = () => {}, setShowSignUp = () => {} }) => {
 
   const handleKeyDown = (e, value) => {
     if (e.key === ' ' && value.length === 0) {
-      e.preventDefault(); // Prevent space from being entered at the start
+      e.preventDefault(); 
     }
   };
 
@@ -53,7 +53,7 @@ const Signup = ({ setShowLogin = () => {}, setShowSignUp = () => {} }) => {
         type="email"
         placeholder="Email"
         value={email}
-        onChange={(e) => setEmail(e.target.value)} // Keep trim logic in handleSignUp
+        onChange={(e) => setEmail(e.target.value)} 
         onKeyDown={(e) => handleKeyDown(e, email)}
         className="input-box"
         required
@@ -63,7 +63,7 @@ const Signup = ({ setShowLogin = () => {}, setShowSignUp = () => {} }) => {
           type={showPassword ? 'text' : 'password'}
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)} // Keep trim logic in handleSignUp
+          onChange={(e) => setPassword(e.target.value)} 
           onKeyDown={(e) => handleKeyDown(e, password)}
           className="input-box"
           required
@@ -81,7 +81,7 @@ const Signup = ({ setShowLogin = () => {}, setShowSignUp = () => {} }) => {
           type={showConfirmPassword ? 'text' : 'password'}
           placeholder="Confirm Password"
           value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)} // Keep trim logic in handleSignUp
+          onChange={(e) => setConfirmPassword(e.target.value)} 
           onKeyDown={(e) => handleKeyDown(e, confirmPassword)}
           className="input-box"
           required
@@ -104,8 +104,8 @@ const Signup = ({ setShowLogin = () => {}, setShowSignUp = () => {} }) => {
           href="#"
           className="back-to-login-link"
           onClick={() => {
-            console.log('Navigating back to Login form'); // Debugging navigation
-            setShowLogin(true); // Switch to login form
+            console.log('Navigating back to Login form'); 
+            setShowLogin(true); 
             setShowSignUp(false);
           }}
         >
