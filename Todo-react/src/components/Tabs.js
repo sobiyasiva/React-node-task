@@ -4,17 +4,16 @@ import './Styles.css';
 
 const Tabs = ({ activeTab, onTabChange, taskCounts }) => {
   const handleTabChange = (tab) => {
-    console.log(`Tab changed from "${activeTab}" to "${tab}"`); // Debugging message
+    console.log(`Tab changed from "${activeTab}" to "${tab}"`); 
     onTabChange(tab);
   };
 
   return (
     <div className="tabs-container">
-      {/* Highlight logic based on activeTab */}
       <Button
         label={`All (${taskCounts.all})`}
         onClick={() => handleTabChange('all')}
-        className={`tab-button ${activeTab === 'all' ? 'active' : ''}`} // Properly apply 'active' class
+        className={`tab-button ${activeTab === 'all' ? 'active' : ''}`} 
       />
       <Button
         label={`In-Progress (${taskCounts.inProgress})`}
