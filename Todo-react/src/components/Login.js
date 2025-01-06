@@ -8,29 +8,26 @@ const Login = ({ setShowSignUp }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // State to track login status
+  const [isLoggedIn, setIsLoggedIn] = useState(false); 
+  const refreshToken = sessionStorage.getItem('refreshToken');
 
   const accessToken = sessionStorage.getItem('accessToken');
-  console.log('Access Token:', accessToken); // Debug: Check accessToken from sessionStorage
-  console.log('Is Logged In:', isLoggedIn); // Debug: Check the state of isLoggedIn
-
   if (accessToken || isLoggedIn) {
-    console.log('Redirecting to Main component...'); // Debug: Confirm redirect condition
     return <Main />;
   }
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    console.log('Login form submitted'); // Debug: Log form submission
+    console.log('Login form submitted'); 
 
     if (!email || !password) {
-      console.log('Validation failed: Missing email or password'); // Debug: Validation failure
+      console.log('Validation failed: Missing email or password'); 
       setErrorMessage('Both fields are required.');
       return;
     }
 
     try {
-      console.log('Sending login request to the server...'); // Debug: API call initiated
+      console.log('Sending login request to the server...'); 
       const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -38,31 +35,32 @@ const Login = ({ setShowSignUp }) => {
       });
 
       if (!response.ok) {
-        console.error('Server responded with an error'); // Debug: Server error
+        console.error('Server responded with an error'); 
         throw new Error('Failed to connect to the server.');
       }
 
       const data = await response.json();
-      console.log('Server response:', data); // Debug: Log the response from the server
+      console.log('Server response:', data); 
 
       if (data.status === 'success' && data.token) {
-        console.log('Login successful! Saving token and userId...'); // Debug: Successful login
-        sessionStorage.setItem('accessToken', data.token); // Save the token as accessToken
+        console.log('Login successful! Saving token and userId...'); 
+        sessionStorage.setItem('refreshToken', data.refreshToken);  
+        sessionStorage.setItem('accessToken', data.token); 
         sessionStorage.setItem('userId', data.userId);
-        setIsLoggedIn(true); // Update the state to trigger redirection
+        setIsLoggedIn(true); 
       } else {
-        console.log('Login failed:', data.message || 'Invalid login credentials'); // Debug: Log failure message
+        console.log('Login failed:', data.message || 'Invalid login credentials'); 
         setErrorMessage(data.message || 'Invalid login credentials.');
       }
       
     } catch (error) {
-      console.error('Error logging in:', error); // Debug: Catch unexpected errors
-      setErrorMessage('An unexpected error occurred. Please try again.');
+      console.error('Error logging in:', error); 
+      setErrorMessage('User not found.Please signup.');
     }
   };
   const handleKeyDown = (e, value) => {
     if (e.key === ' ' && value.length === 0) {
-      e.preventDefault(); // Prevent space from being entered at the start
+      e.preventDefault(); 
     }
   };
   return (
@@ -90,7 +88,7 @@ const Login = ({ setShowSignUp }) => {
           type="button"
           className="toggle-password"
           onClick={() => {
-            console.log('Toggling password visibility'); // Debug: Toggle password visibility
+            console.log('Toggling password visibility'); 
             setShowPassword(!showPassword);
           }}
           aria-label={showPassword ? 'Hide password' : 'Show password'}
@@ -104,7 +102,7 @@ const Login = ({ setShowSignUp }) => {
       <button
         type="button"
         onClick={() => {
-          console.log('Navigating to Sign Up form'); // Debug: Sign-up navigation
+          console.log('Navigating to Sign Up form'); 
           setShowSignUp(true);
         }}
         className="signup-button"
