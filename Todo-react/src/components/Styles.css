@@ -1,4 +1,4 @@
-/* Reset and global styles */
+
 * {
   margin: 0;
   padding: 0;
@@ -15,7 +15,6 @@ html, body {
   overflow: hidden;
 }
 
-/* Styles for the task list header */
 .task-list-header {
   background-color: #f4f4f4;
   padding: 15px 20px;
@@ -34,7 +33,6 @@ html, body {
   margin-right: 40px;
 }
 
-/* Main Content */
 .MainContent {
   margin: 1% auto;
   width: 50%;
@@ -60,7 +58,6 @@ h1 {
   font-weight: bold;
 }
 
-/* Logout Button */
 .logout-button {
   padding: 10px 20px;
   background-color: #5f345d;
@@ -79,7 +76,6 @@ h1 {
   opacity: 0.9;
 }
 
-/* TaskInput styles */
 .TaskInput {
   display: flex;
   justify-content: space-between;
@@ -122,7 +118,6 @@ h1 {
   font-style: italic;
 }
 
-/* Tabs styles */
 .tabs-container {
   display: flex;
   justify-content: center;
@@ -149,7 +144,7 @@ h1 {
   background-color: rgb(12, 61, 61);
   color: white;
 }
-/* Styles.css */
+
 
 .no-tasks-message {
   text-align: center;
@@ -160,7 +155,6 @@ h1 {
 }
 
 
-/* Task List Header */
 .task-list-header {
   display: flex;
   justify-content: space-between;
@@ -183,7 +177,6 @@ h1 {
   text-align: center;
 }
 
-/* Task List */
 .task-list {
   max-height: 60vh;
   overflow-y: auto;
@@ -214,22 +207,22 @@ h1 {
   flex: 1;
   margin: 0 10px;
 }
-/* Task name styling in the modal */
+
 .modal-task-name {
   font-size: 1.2rem;
   font-weight: bold;
   color: #333;
   margin-top: 10px;
-  text-align: center; /* Center align the task name */
-  word-wrap: break-word; /* Break long words to prevent overflow */
-  max-width: 100%; /* Ensure it doesn't exceed the width of the modal */
+  text-align: center; 
+  word-wrap: break-word; 
+  max-width: 100%; 
   padding: 10px;
   background-color: #f9f9f9;
   border: 1px solid #ccc;
   border-radius: 4px;
-  overflow-x: hidden; /* Prevent horizontal scroll */
-  max-height: 100px; /* Optional: limit the height if needed */
-  overflow-y: auto;  /* Enable vertical scroll if content overflows */
+  overflow-x: hidden; 
+  max-height: 100px;
+  overflow-y: auto;  
 }
 
 .task-actions {
@@ -269,7 +262,6 @@ h1 {
   margin-top: 20px;
 }
 
-/* Toast Container */
 .toast-container {
   position: fixed;
   bottom: 20px;
@@ -342,7 +334,6 @@ h1 {
   }
 }
 
-/* Confirmation Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -379,12 +370,11 @@ h1 {
   margin-bottom: 20px;
 }
 
-/* Modal Buttons Container */
 .modal-buttons {
   margin-top: 20px;
   display: flex;
-  justify-content: center; /* Center buttons horizontally */
-  align-items: center; /* Center buttons vertically */
+  justify-content: center; 
+  align-items: center; 
   gap: 10px;
 }
 
@@ -415,7 +405,6 @@ h1 {
   background-color: #e53935;
 }
 
-/* Yes/No Buttons */
 .yes-button {
   background-color: #4caf50;
   color: white;
@@ -434,8 +423,6 @@ h1 {
   background-color: #e53935;
 }
 
-
-/* Media Queries for Responsiveness */
 @media only screen and (max-width: 768px) {
   .MainContent {
     width: 100%;
@@ -451,9 +438,10 @@ h1 {
     font-size: 0.875rem;
     padding: 8px 15px;
   }
+  
 }
-/* @media only screen and (min-width: 1000px) {
-  .task-list{
-    max-height:70vh;
+@media (min-width: 900px) and (min-height: 1500px) {
+  .task-list {
+    max-height: 80vh;
   }
-} */
+}
