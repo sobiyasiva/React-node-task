@@ -11,22 +11,22 @@ module.exports = {
       },
       email: {
         type: Sequelize.STRING,
-        allowNull: false, // Ensure email cannot be null
-        unique: true // Ensure email is unique
+        allowNull: false, 
+        unique: true 
       },
       password: {
         type: Sequelize.STRING,
-        allowNull: false, // Ensure password is not null
+        allowNull: false, 
       },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW // Add default value to make sure it's set automatically
+        defaultValue: Sequelize.NOW 
       },
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
-        defaultValue: Sequelize.NOW // Add default value to make sure it's set automatically
+        defaultValue: Sequelize.NOW 
       }
     });
   },
