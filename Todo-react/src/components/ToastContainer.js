@@ -7,7 +7,7 @@ const ToastContainer = () => {
   useEffect(() => {
     const handleToastEvent = (event) => {
       const { message, type } = event.detail;
-      console.log("Toast event received:", message, type); // Debugging line
+      console.log("Toast event received:", message, type); 
       setToasts((prevToasts) => [...prevToasts, { message, type }]);
     };
 
