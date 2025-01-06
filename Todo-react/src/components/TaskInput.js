@@ -2,41 +2,35 @@ import React, { useState, useEffect, useRef } from 'react';
 
 function TaskInput({ addTask, isEditing, taskToEdit, taskInputRef, buttonText, showToast }) {
   const [task, setTask] = useState("");
-
-  // Effect to set task value if editing an existing task
   useEffect(() => {
     if (taskToEdit && isEditing) {
-      setTask(taskToEdit.taskName); // Set the task name if editing
+      setTask(taskToEdit.taskName); 
       if (taskInputRef.current) {
-        taskInputRef.current.focus(); // Focus the input field if editing
+        taskInputRef.current.focus(); 
       }
     } else if (!isEditing) {
-      setTask("");  // Clear the task input when not editing
+      setTask(""); 
     }
   }, [taskToEdit, isEditing, taskInputRef]);
-
-  // Handle input changes
   const handleInputChange = (e) => {
-    setTask(e.target.value); // Update task state with input value
+    setTask(e.target.value); 
   };
-
   const handleAddOrUpdateTask = () => {
-    const trimmedTask = task.trim(); // Trim the input value
-
+    const trimmedTask = task.trim(); 
     if (trimmedTask === "") {
-      showToast("Task cannot be empty", "warning"); // Show toast if input is empty
-      return; // Do nothing if the task input is empty
+      showToast("Task cannot be empty", "warning");
+      return; 
     }
 
-    addTask(trimmedTask, taskToEdit?.id); // Call addTask with trimmed value
+    addTask(trimmedTask, taskToEdit?.id); 
     if (!isEditing) {
-      setTask(""); // Only clear input if adding a new task
+      setTask(""); 
     }
   };
 
   const handleKeyDown = (event) => {
     if (event.key === 'Enter') {
-      handleAddOrUpdateTask();  // Trigger the task saving logic on Enter
+      handleAddOrUpdateTask();  
     }
   };
 
@@ -44,13 +38,13 @@ function TaskInput({ addTask, isEditing, taskToEdit, taskInputRef, buttonText, s
     <div className="TaskInput">
       <input
         type="text"
-        value={task} // The input value is bound to the task state
-        onChange={handleInputChange} // Handle input changes
+        value={task} 
+        onChange={handleInputChange} 
         placeholder="Enter a task"
-        ref={taskInputRef} // Focus the input if editing
-        onKeyDown={handleKeyDown}  // Handle Enter key press
+        ref={taskInputRef} 
+        onKeyDown={handleKeyDown}  
       />
-      <button onClick={handleAddOrUpdateTask}>{buttonText}</button> {/* Button for adding or updating task */}
+      <button onClick={handleAddOrUpdateTask}>{buttonText}</button> 
     </div>
   );
 }
