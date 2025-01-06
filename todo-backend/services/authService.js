@@ -49,14 +49,14 @@ class AuthService {
   }
 
   static generateAccessToken(userId) {
-    const payload = { userId, exp: Date.now() + 3600000 }; // 1 hour expiration
+    const payload = { userId, exp: Date.now() + 3600000 };
     const data = `${userId}.${payload.exp}`;
     const signature = crypto.createHmac('sha256', SECRET_KEY).update(data).digest('hex');
     return `${userId}.${payload.exp}.${signature}`;
   }
 
   static generateRefreshToken(userId) {
-    const payload = { userId, exp: Date.now() + 86400000 }; // 1 day expiration
+    const payload = { userId, exp: Date.now() + 86400000 }; 
     const data = `${userId}.${payload.exp}`;
     const signature = crypto.createHmac('sha256', REFRESH_SECRET_KEY).update(data).digest('hex');
     return `${userId}.${payload.exp}.${signature}`;
@@ -89,32 +89,6 @@ class AuthService {
 
     return { userId: parseInt(userId, 10), exp: parseInt(exp, 10) };
   }
-
-  // static async refreshAccessToken(refreshToken) {
-  //   try {
-  //     // Log for debugging
-  //     console.log('Received refresh token:', refreshToken);
-      
-  //     const { userId } = this.verifyRefreshToken(refreshToken);
-      
-  //     // Log userId extraction
-  //     console.log('Extracted userId from refresh token:', userId);
-  
-  //     const newAccessToken = this.generateAccessToken(userId);
-  
-  //     // Log the generated access token
-  //     console.log('Generated new access token:', newAccessToken);
-  
-  //     return {
-  //       status: 'success',
-  //       message: 'Access token refreshed successfully',
-  //       newAccessToken,
-  //     };
-  //   } catch (error) {
-  //     console.error('Error during refresh token processing:', error.message);
-  //     throw new Error(`Error during token refresh: ${error.message}`);
-  //   }
-  // }
   
 }
 
