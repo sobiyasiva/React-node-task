@@ -4,12 +4,6 @@ class AuthController {
   static async signup(req, res) {
     try {
       const { email, password } = req.body;
-
-      // if (!email || !password) {
-      //   return res
-      //     .status(400)
-      //     .json({ status: 'fail', message: 'Email and password are required' });
-      // }
       const newUserResponse = await AuthService.signup(email, password);
       res.status(201).json(newUserResponse); 
     } catch (error) {
@@ -17,7 +11,6 @@ class AuthController {
       res.status(400).json({ status: 'fail', message: error.message });
     }
   }
-
   static async login(req, res) {
     try {
       const { email, password } = req.body;
