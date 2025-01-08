@@ -1,18 +1,8 @@
-'use strict';
-const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
-  class Task extends Model {
-    /**
-     * Helper method for defining associations.
-     */
-    static associate(models) {
-      // Define associations here if needed
-    }
-  }
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database'); 
+const Task = sequelize.define('Task', {
 
-  Task.init(
-    {
       taskName: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -21,12 +11,39 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'users', 
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE',
+      },
     },
     {
       sequelize,
       modelName: 'Task',
+      tableName: 'tasks', 
+      timestamps: true,   
     }
   );
 
-  return Task;
-};
+  module.exports = Task;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
