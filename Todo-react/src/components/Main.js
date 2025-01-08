@@ -21,6 +21,7 @@ function Main() {
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showStatusToggleConfirmation, setShowStatusToggleConfirmation] = useState(false);
+  //without page reloads directly updates
   const taskListRef = useRef(null);
   const taskInputRef = useRef(null);
 
@@ -52,7 +53,6 @@ function Main() {
     const userId = sessionStorage.getItem('userId');
     
     if (!refreshToken || !userId) {
-      showToast("No refresh token available. Please log in again.", "failure");
       handleLogout();
       return null;
     }
@@ -123,7 +123,7 @@ function Main() {
       showToast("This task already exists", "warning");
       return;
     }
-  
+  //to prevent the changes of the task status when editing
     const taskStatus = status || (taskToEdit ? taskToEdit.status : "In-progress");
     const newTask = { taskName: normalizedTaskName, status: taskStatus };
   
@@ -166,12 +166,13 @@ function Main() {
       if (data.status === "success") {
         const updatedTask = {
           ...newTask,
+          //when updating task id will exist when adding newtask data.data.is from the server creates id for the task
           id: taskId || data.data.id,
         };
         setTasks((prevTasks) => {
-          if (taskId) {
+          if (taskId) {//editing
             return prevTasks.map((task) => (task.id === taskId ? updatedTask : task));
-          } else {
+          } else {//new task adding
             return [updatedTask, ...prevTasks];
           }
         });
@@ -364,6 +365,7 @@ function Main() {
       const toggledTask = { ...task, status: newStatus };
   
       setTasks((prevTasks) => {
+        //to ensure only the toggles task is updated and prevents the rest of the task remain unchanged
         const updatedTasks = prevTasks.map((t) => (t.id === task.id ? toggledTask : t));
         const reorderedTasks = updatedTasks
           .filter((t) => t.status.toLowerCase() === newStatus)
@@ -393,6 +395,7 @@ function Main() {
       handleSaveTask(taskName);  
     }
   };
+
   const handleCancelToggle = () => {
     setShowStatusToggleConfirmation(false);
   };
