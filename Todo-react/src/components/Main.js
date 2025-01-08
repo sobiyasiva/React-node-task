@@ -58,7 +58,7 @@ function Main() {
     }
   
     try {
-      const response = await fetch('http://localhost:5000/api/refresh-token', {
+      const response = await fetch('http://localhost:5000/api/user/refresh-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,8 +133,8 @@ function Main() {
       if (!userId) return;
   
       const endpoint = taskId
-        ? `http://localhost:5000/api/tasks/${taskId}`
-        : 'http://localhost:5000/api/tasks';
+        ? `http://localhost:5000/api/task/updatetasks/${taskId}`
+        : 'http://localhost:5000/api/task/addtasks';
       const method = taskId ? 'PUT' : 'POST';
   
       let response = await fetch(endpoint, {
@@ -209,7 +209,7 @@ function Main() {
         return;
       }
   
-      let response = await fetch("http://localhost:5000/api/tasks", {
+      let response = await fetch("http://localhost:5000/api/task/gettasks", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -227,7 +227,7 @@ function Main() {
           return;
         }
   
-        response = await fetch("http://localhost:5000/api/tasks", {
+        response = await fetch("http://localhost:5000/api/task/gettasks", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -306,7 +306,7 @@ function Main() {
   
     try {
       const accessToken = sessionStorage.getItem('accessToken');
-      const response = await fetch(`http://localhost:5000/api/tasks/${task.id}`, {
+      const response = await fetch(`http://localhost:5000/api/task/deletetasks/${task.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
