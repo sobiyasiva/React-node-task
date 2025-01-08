@@ -1,14 +1,15 @@
-const {Sequelize} = require('sequelize');
 
+require('dotenv').config();
+
+const { Sequelize } = require('sequelize');
 const sequelize = new Sequelize(
-  'todo_db', 
-  'root',   
-  'sobi@123', 
+  process.env.DB_NAME,        
+  process.env.DB_USER,         
+  process.env.DB_PASSWORD,     
   {
-    host: '127.0.0.1', 
-    port: 3307,        
-    dialect: 'mariadb', 
-
+    host: process.env.DB_HOST, 
+    port: process.env.DB_PORT, 
+    dialect: process.env.DB_DIALECT,        
   }
 );
 
