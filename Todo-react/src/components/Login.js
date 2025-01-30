@@ -16,6 +16,16 @@ const Login = ({ setShowSignUp }) => {
     return <Main />;
   }
 
+  const showToast = (message, type) => {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     console.log('Login form submitted'); 
@@ -35,19 +45,20 @@ const Login = ({ setShowSignUp }) => {
       });
 
       if (!response.ok) {
-        console.error('Server responded with an error'); 
+        console.error('Server responded with an error');
         throw new Error('Failed to connect to the server.');
       }
 
       const data = await response.json();
-      console.log('Server response:', data); 
+      console.log('Server response:', data);
 
       if (data.status === 'success' && data.token) {
-        console.log('Login successful! Saving token and userId...'); 
-        sessionStorage.setItem('refreshToken', data.refreshToken);  
-        sessionStorage.setItem('accessToken', data.token); 
+        console.log('Login successful! Saving token and userId...');
+        sessionStorage.setItem('refreshToken', data.refreshToken);
+        sessionStorage.setItem('accessToken', data.token);
         sessionStorage.setItem('userId', data.userId);
-        setIsLoggedIn(true); 
+        setIsLoggedIn(true);
+        showToast('Login successful', 'success');
       } else {
         console.log('Login failed:', data.message || 'Invalid login credentials'); 
         setErrorMessage(data.message || 'Invalid login credentials.');
@@ -55,14 +66,16 @@ const Login = ({ setShowSignUp }) => {
       
     } catch (error) {
       console.error('Error logging in:', error); 
-      setErrorMessage('User not found.Please signup.');
+      setErrorMessage('User not found. Please signup.');
     }
   };
+
   const handleKeyDown = (e, value) => {
     if (e.key === ' ' && value.length === 0) {
       e.preventDefault(); 
     }
   };
+
   return (
     <form className="login-container" onSubmit={handleLogin}>
       <h2>Login</h2>
