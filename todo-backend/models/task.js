@@ -1,7 +1,7 @@
 
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database'); 
-const Task = sequelize.define('Task', {
+const sequelize = require('../config/database');
+const Task = sequelize.define('Tasks', {
 
       taskName: {
         type: DataTypes.STRING,
@@ -15,7 +15,7 @@ const Task = sequelize.define('Task', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: 'users', 
+          model: 'User',
           key: 'id',
         },
         onUpdate: 'CASCADE',
@@ -24,26 +24,9 @@ const Task = sequelize.define('Task', {
     },
     {
       sequelize,
-      modelName: 'Task',
-      tableName: 'tasks', 
+      tableName: 'Tasks', 
       timestamps: true,   
     }
   );
 
   module.exports = Task;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
