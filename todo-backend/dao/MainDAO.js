@@ -1,26 +1,34 @@
+const Task = require('../models/task');
 
-const Task = require('../models/task'); 
 class MainDAO {
-  static async getTasks(userId, status = 'all') {
+  static async getTasks(userId, status) {
     try {
-      console.log('Fetching tasks for user:', userId, 'with status:', status);
+      const whereClause = { user_id: userId, deleteFlag: 0 }; 
 
-      const whereClause = { user_id: userId }; 
-      if (status !== 'all') {
-        whereClause.status = status; 
+      if (status !== 0) {
+        whereClause.status = status;
       }
-
+  
+      console.log('DAO: Querying tasks with filter:', whereClause);
+  
       const tasks = await Task.findAll({
         where: whereClause,
-        order: [['createdAt', 'DESC']], 
+        order: [['createdAt', 'DESC']],
       });
-
-      return tasks; 
+  
+      // tasks.forEach(task => {
+      //   console.log(`Task ID: ${task.id}, Task Status: ${task.status === 0 ? 'In-progress' : task.status === 1 ? 'Completed' : 'Unknown'}`);
+      // });
+  
+      return tasks;
     } catch (error) {
-      console.error('Error fetching tasks:', error.message, error.stack);
-      throw new Error('Error fetching tasks from database: ' + error.message);
+      console.error('DAO: Error fetching tasks:', error.message);
+      throw new Error('Database error: ' + error.message);
     }
   }
+  
+
+
 
   static async createTask(userId, taskName) {
     try {
@@ -29,7 +37,7 @@ class MainDAO {
       const newTask = await Task.create({
         user_id: userId,
         taskName,
-        status: 'In-progress',
+        status: 0, 
       });
 
       console.log('Task created successfully:', newTask);
@@ -44,8 +52,8 @@ class MainDAO {
     try {
       console.log('Updating task for user:', userId, 'Task ID:', taskId, 'Task Name:', taskName, 'Status:', status);
 
-      const updateData = { taskName }; 
-      if (status) updateData.status = status;
+      const updateData = { taskName };
+      if (status !== undefined) updateData.status = parseInt(status);
 
       const [updatedRowCount] = await Task.update(updateData, {
         where: {
@@ -59,7 +67,7 @@ class MainDAO {
         return null;
       }
 
-      const updatedTask = await Task.findByPk(taskId); 
+      const updatedTask = await Task.findByPk(taskId);
       return updatedTask;
     } catch (error) {
       console.error('Error updating task:', error.message, error.stack);
@@ -71,25 +79,31 @@ class MainDAO {
     try {
       console.log(`Attempting to delete task for user ID: ${userId}, Task ID: ${taskId}`);
 
-      const deletedRowCount = await Task.destroy({
-        where: {
-          id: taskId,
-          user_id: userId,
-        },
-      });
-
-      if (deletedRowCount === 0) {
-        console.error('Task not found or user lacks permission for taskId:', taskId);
+      const [updatedRowCount] = await Task.update(
+        { deleteFlag: true }, 
+        {
+          where: {
+            id: taskId,
+            user_id: userId,
+            deleteFlag: false, 
+          },
+        }
+      );
+  
+      if (updatedRowCount === 0) {
+        console.error('Task not found or already deleted for taskId:', taskId);
         return null;
       }
-
+  
       console.log('Task deleted successfully for taskId:', taskId);
       return true;
     } catch (error) {
-      console.error('Error deleting task:', error.message, error.stack);
-      throw new Error('Error deleting task from the database: ' + error.message);
+      console.error('Error soft deleting task:', error.message, error.stack);
+      throw new Error('Error soft deleting task from the database: ' + error.message);
     }
   }
+  
+  
 }
 
 module.exports = MainDAO;
