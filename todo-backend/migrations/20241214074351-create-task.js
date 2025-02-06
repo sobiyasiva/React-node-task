@@ -20,6 +20,10 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: false, 
         },
+        deleteFlag: {
+          type: Sequelize.INTEGER,
+          defaultValue: 0,
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,
@@ -61,3 +65,6 @@ module.exports = {
     }
   }
 };
+
+
+//use strict allows to write code and shows correct error for debugging .i.e it handles error efficiently
