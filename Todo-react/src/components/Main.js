@@ -85,116 +85,121 @@ function Main() {
     }
   };
   
-  const handleSaveTask = async (
-    taskName,
-    taskId = null,
-    status = null,
-    showUpdateToast = true
-  ) => {
-    if (!taskName.trim()) {
-      showToast("Task cannot be empty", "warning");
-      return;
-    }
-  
-    const hasNumbers = /\d/.test(taskName);
-    if (hasNumbers) {
-      showToast("Numbers are not allowed in the task name", "warning");
-      return;
-    }
-  
-    const regex = /^[a-zA-Z\s]*$/;
-    if (!regex.test(taskName)) {
-      showToast("Special characters are not allowed", "warning");
-      return;
-    }
-  
-    const normalizedTaskName = taskName.trim().replace(/\s+/g, ' ');
-    if (taskToEdit && taskToEdit.taskName === normalizedTaskName) {
-      showToast("No changes made", "warning");
-      setIsEditing(false);
-      setTaskToEdit(null);
-      return;
-    }
-  
-    const isDuplicate = tasks.some(
-      (task) => task.taskName.toLowerCase() === normalizedTaskName.toLowerCase() && task.id !== taskId
-    );
-    if (isDuplicate) {
-      showToast("This task already exists", "warning");
-      return;
-    }
-  //to prevent the changes of the task status when editing
-    const taskStatus = status || (taskToEdit ? taskToEdit.status : "In-progress");
-    const newTask = { taskName: normalizedTaskName, status: taskStatus };
-  
-    try {
-      const accessToken = sessionStorage.getItem('accessToken');
-      const userId = sessionStorage.getItem('userId');
-      if (!userId) return;
-  
-      const endpoint = taskId
-        ? `http://localhost:5000/api/task/updatetasks/${taskId}`
-        : 'http://localhost:5000/api/task/addtasks';
-      const method = taskId ? 'PUT' : 'POST';
-  
-      let response = await fetch(endpoint, {
+const handleSaveTask = async (
+  taskName,
+  taskId = null,
+  status = null,
+  showUpdateToast = true
+) => {
+  if (!taskName.trim()) {
+    showToast("Task cannot be empty", "warning");
+    return;
+  }
+
+  const hasNumbers = /\d/.test(taskName);
+  if (hasNumbers) {
+    showToast("Numbers are not allowed in the task name", "warning");
+    return;
+  }
+
+  const regex = /^[a-zA-Z\s]*$/;
+  if (!regex.test(taskName)) {
+    showToast("Special characters are not allowed", "warning");
+    return;
+  }
+
+  const normalizedTaskName = taskName.trim().replace(/\s+/g, ' ');
+
+  if (taskToEdit && taskToEdit.taskName === normalizedTaskName) {
+    showToast("No changes made", "warning");
+    setIsEditing(false);
+    setTaskToEdit(null);
+    return;
+  }
+
+  const isDuplicate = tasks.some(
+    (task) => task.taskName.toLowerCase() === normalizedTaskName.toLowerCase() && task.id !== taskId
+  );
+  if (isDuplicate) {
+    showToast("This task already exists", "warning");
+    return;
+  }
+
+  // Ensure the status is correctly set, toggling between 0 (Incomplete) and 1 (Complete)
+  const taskStatus = status !== null ? status : (taskToEdit ? taskToEdit.status : 0);
+
+  const newTask = { taskName: normalizedTaskName, status: taskStatus };
+
+  try {
+    const accessToken = sessionStorage.getItem('accessToken');
+    const userId = sessionStorage.getItem('userId');
+    if (!userId) return;
+
+    const endpoint = taskId
+      ? `http://localhost:5000/api/task/updatetasks/${taskId}`
+      : 'http://localhost:5000/api/task/addtasks';
+    const method = taskId ? 'PUT' : 'POST';
+
+    let response = await fetch(endpoint, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'UserId': userId,
+      },
+      body: JSON.stringify(newTask),
+    });
+
+    if (response.status === 401) {
+      const newAccessToken = await refreshAccessToken();
+      if (!newAccessToken) return;
+
+      response = await fetch(endpoint, {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${newAccessToken}`,
           'UserId': userId,
         },
         body: JSON.stringify(newTask),
       });
-  
-      if (response.status === 401) { 
-        const newAccessToken = await refreshAccessToken();
-        if (!newAccessToken) return; 
-  
-        response = await fetch(endpoint, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${newAccessToken}`,
-            'UserId': userId,
-          },
-          body: JSON.stringify(newTask),
-        });
-      }
-  
-      const data = await response.json();
-      if (data.status === "success") {
-        const updatedTask = {
-          ...newTask,
-          //when updating task id will exist when adding newtask data.data.is from the server creates id for the task
-          id: taskId || data.data.id,
-        };
-        setTasks((prevTasks) => {
-          if (taskId) {//editing
-            return prevTasks.map((task) => (task.id === taskId ? updatedTask : task));
-          } else {//new task adding
-            return [updatedTask, ...prevTasks];
-          }
-        });
-        setIsEditing(false);
-        setTaskToEdit(null);
-        if (taskListRef.current) {
-          taskListRef.current.scrollTop = 0;
-        }
-        if (taskId && showUpdateToast) {
-          showToast("Task updated successfully", "success");
-        } else if (!taskId) {
-          showToast("Task saved successfully", "success");
-          setActiveTab('All');
-        }
-      } else {
-        showToast(data.message, "failure");
-      }
-    } catch (error) {
-      console.error("Error occurred during task save operation:", error);
-      showToast("Error saving task", "failure");
     }
-  };
+
+    const data = await response.json();
+    if (data.status === "success") {
+      const updatedTask = {
+        ...newTask,
+        id: taskId || data.data.id,
+      };
+      setTasks((prevTasks) => {
+        if (taskId) {
+          // editing
+          return prevTasks.map((task) => (task.id === taskId ? updatedTask : task));
+        } else {
+          // new task adding
+          return [updatedTask, ...prevTasks];
+        }
+      });
+      setIsEditing(false);
+      setTaskToEdit(null);
+      if (taskListRef.current) {
+        taskListRef.current.scrollTop = 0;
+      }
+      if (taskId && showUpdateToast) {
+        showToast("Task updated successfully", "success");
+      } else if (!taskId) {
+        showToast("Task saved successfully", "success");
+        setActiveTab('All');
+      }
+    } else {
+      showToast(data.message, "failure");
+    }
+  } catch (error) {
+    console.error("Error occurred during task save operation:", error);
+    showToast("Error saving task", "failure");
+  }
+};
+
   
  
   const getTodos = async () => {
@@ -329,65 +334,80 @@ function Main() {
     }
   };
   
-  const handleToggleTaskStatus = (task) => {
-    const newStatus = task.status.toLowerCase() === 'in-progress' ? 'completed' : 'in-progress';
   
-    if (activeTab.toLowerCase() === 'all') {
-      const message =
-        newStatus === 'completed'
-          ? `Are you sure you want to mark the task "${task.taskName}" as completed?`
-          : `Are you sure you want to mark the task "${task.taskName}" as in-progress?`;
   
-      setTaskToToggle({
-        task,
-        newStatus,
-        message,
-      });
-      setShowStatusToggleConfirmation(true);
-    } else {
-      const message =
-        newStatus === 'completed'
-          ? `Are you sure you want to mark the task "${task.taskName}" as completed?`
-          : `Are you sure you want to mark the task "${task.taskName}" as in-progress?`;
+  const handleToggleTaskStatus = async (task) => {
+    // Log the current status of the task before toggling
+    console.log(`Task "${task.taskName}" is currently in the "${task.status === 0 ? 'in-progress' : 'completed'}" status.`);
   
-      setTaskToToggle({
-        task,
-        newStatus,
-        message,
-      });
-      setShowStatusToggleConfirmation(true);
-    }
+    // Toggle between in-progress (0) and completed (1) status
+    const newStatus = task.status === 0 ? 1 : 0; // If status is 0 (in-progress), change to 1 (completed), otherwise change to 0 (in-progress)
+  
+    // Log the new status that the task will be switched to
+    const taskStatusText = newStatus === 1 ? 'completed' : 'in-progress';
+    console.log(`Task "${task.taskName}" is switching to the "${taskStatusText}" status.`);
+  
+    // Confirmation message
+    const message = newStatus === 1
+      ? `Are you sure you want to mark the task "${task.taskName}" as completed?`
+      : `Are you sure you want to mark the task "${task.taskName}" as in-progress?`;
+  
+    // Set the task to toggle and show the confirmation modal
+    setTaskToToggle({
+      task,
+      newStatus,
+      message,
+    });
+    setShowStatusToggleConfirmation(true);
   };
   
-  const handleConfirmToggle = () => {
+  const handleConfirmToggle = async () => {
     if (taskToToggle) {
       const { task, newStatus } = taskToToggle;
-      const toggledTask = { ...task, status: newStatus };
   
+      // Update the task's status locally
+      const updatedTask = { ...task, status: newStatus };
+  
+      // Update tasks list in state
       setTasks((prevTasks) => {
-        //to ensure only the toggles task is updated and prevents the rest of the task remain unchanged
-        const updatedTasks = prevTasks.map((t) => (t.id === task.id ? toggledTask : t));
-        const reorderedTasks = updatedTasks
-          .filter((t) => t.status.toLowerCase() === newStatus)
-          .sort((a, b) => (a.id === task.id ? -1 : b.id === task.id ? 1 : 0))
-          .concat(updatedTasks.filter((t) => t.status.toLowerCase() !== newStatus));
-  
-        return reorderedTasks;
+        return prevTasks.map((t) => (t.id === task.id ? updatedTask : t));
       });
   
-      const statusMessage =
-        newStatus === 'completed'
-          ? 'Task marked as Completed successfully'
-          : 'Task marked as In-progress successfully';
-      showToast(statusMessage, 'success'); 
-      handleSaveTask(toggledTask.taskName, toggledTask.id, newStatus, false); 
-      if (activeTab.toLowerCase() !== 'all' && activeTab.toLowerCase() !== newStatus) {
-        setActiveTab(newStatus);
-      } 
+      // Now make the request to update the task in the backend
+      try {
+        const accessToken = sessionStorage.getItem('accessToken');
+        const userId = sessionStorage.getItem('userId');
+        if (!userId) return;
+  
+        const endpoint = `http://localhost:5000/api/task/updatetasks/${task.id}`;
+        const response = await fetch(endpoint, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+            'UserId': userId,
+          },
+          body: JSON.stringify(updatedTask),
+        });
+  
+        const data = await response.json();
+  
+        if (data.status === "success") {
+          showToast(`Task marked as ${newStatus === 1 ? 'Completed' : 'In-progress'} successfully`, "success");
+        } else {
+          showToast(data.message, "failure");
+        }
+      } catch (error) {
+        console.error("Error occurred during task status update:", error);
+        showToast("Error updating task", "failure");
+      }
+  
       setTaskToToggle(null);
       setShowStatusToggleConfirmation(false);
     }
   };
+   
+  
   
   const handleKeyDown = (event) => {
     if (event.key === 'Enter') {
@@ -406,16 +426,22 @@ function Main() {
     });
     window.dispatchEvent(toastEvent);
   };
-
   const filteredTasks = tasks.filter((task) => {
-    const taskStatus = task.status.toLowerCase();
-    const activeTabLower = activeTab.toLowerCase();
+    const taskStatus = task.status; // Task status (0 for in-progress, 1 for completed)
+    const activeTabLower = activeTab.toLowerCase(); // Current tab being viewed (e.g., 'all', 'in-progress', 'completed')
+  
+    console.log(`Filtering tasks for ${activeTabLower} tab`);
+  
+    // Show tasks in all tabs if status matches
     return (
-      activeTabLower === 'all' ||
-      (activeTabLower === 'in-progress' && taskStatus === 'in-progress') ||
-      (activeTabLower === 'completed' && taskStatus === 'completed')
+      activeTabLower === 'all' || // All tasks (both in-progress and completed) should be shown in the 'all' tab
+      (activeTabLower === 'in-progress' && taskStatus === 0) || // Only in-progress tasks in the 'in-progress' tab
+      (activeTabLower === 'completed' && taskStatus === 1) // Only completed tasks in the 'completed' tab
     );
   });
+  
+  
+  
   
 
   return (
@@ -423,7 +449,7 @@ function Main() {
       {showSignUp ? (
         <Signup setShowSignUp={setShowSignUp} />
       ) : showLogin ? (
-        <Login setShowLogin={setShowLogin} setShowSignUp={setShowSignUp} />
+        <Login setShowLogin={setShowLogin} setShowSignUp={setShowSignUp} />//login-component, setShowLogin-manual name and {setShowLogin}-props
       ) : (
         <div className="MainContent">
           <div className="App">
@@ -440,47 +466,46 @@ function Main() {
               showToast={showToast}
               onKeyDown={handleKeyDown}
             />
-          <Tabs
-  activeTab={activeTab}
-  onTabChange={(tab) => setActiveTab(tab)}
-  taskCounts={{
-    all: tasks.length,
-    inProgress: tasks.filter(task => task.status.toLowerCase() === 'in-progress').length,
-    completed: tasks.filter(task => task.status.toLowerCase() === 'completed').length,
-  }}
-/>
-
+            <Tabs
+              activeTab={activeTab}
+              onTabChange={(tab) => setActiveTab(tab)}
+              taskCounts={{
+                all: tasks.length,
+                inProgress: tasks.filter(task => task.status === 0).length, 
+                completed: tasks.filter(task => task.status === 1).length, 
+              }}
+            />
+  
             <ToastContainer toastStatus={toastStatus} />
             <div className="task-list-header">
               <h2>List of Tasks</h2>
               <h2 className='actions'>Actions</h2>
             </div>
             {filteredTasks.length === 0 ? (
-  <p className="no-tasks-message">No Tasks Available</p>
-
-) : (
-  <div className="task-list" ref={taskListRef}>
-    {filteredTasks.map((task) => (
-      <div key={task.id} className="task-container">
-        <div className="task-content">
-          <input
-            type="checkbox"
-            checked={task.status.toLowerCase() === 'completed'}
-            onChange={() => handleToggleTaskStatus(task)}
-          />
-          <p className={`task-name ${task.status.toLowerCase() === 'completed' ? 'completed' : ''}`}>
-            {task.taskName}
-          </p>
-          <div className="task-actions">
-            <Button label="Edit" className="edit-button" onClick={() => handleEditTask(task)} />
-            <Button label="Delete" className="delete-button" onClick={() => handleOpenDeleteDialog(task)} />
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-)}
-
+              <p className="no-tasks-message">No Tasks Available</p>
+            ) : (
+              <div className="task-list" ref={taskListRef}>
+                {filteredTasks.map((task) => (
+                  <div key={task.id} className="task-container">
+                    <div className="task-content">
+                      <input
+                        type="checkbox"
+                        checked={task.status === 1} 
+                        onChange={() => handleToggleTaskStatus(task)}
+                      />
+                      <p className={`task-name ${task.status === 1 ? 'completed' : ''}`}>
+                        {task.taskName}
+                      </p>
+                      <div className="task-actions">
+                        <Button label="Edit" className="edit-button" onClick={() => handleEditTask(task)} />
+                        <Button label="Delete" className="delete-button" onClick={() => handleOpenDeleteDialog(task)} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+  
             {showLogoutConfirmation && (
               <ConfirmationModal
                 message="Are you sure you want to log out?"
@@ -498,7 +523,7 @@ function Main() {
             )}
             {showStatusToggleConfirmation && (
               <ConfirmationModal
-                message={taskToToggle?.newStatus === 'completed'
+                message={taskToToggle?.newStatus === 1
                   ? `Are you sure you want to mark the task as Completed?`
                   : `Are you sure you want to mark the task as In-Progress?`}
                 task={taskToToggle?.task}
@@ -511,6 +536,7 @@ function Main() {
       )}
     </>
   );
+  
 }
 
 export default Main;
