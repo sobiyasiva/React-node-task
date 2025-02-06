@@ -79,11 +79,10 @@ class AuthService {
     const expectedSignature = crypto.createHmac('sha256', SECRET_KEY).update(`${userId}.${exp}`).digest('hex');
     if (expectedSignature !== signature) throw new Error('Invalid token');
     
-    if (Date.now() > parseInt(exp, 10)) {
+    if (Date.now() > parseInt(exp)) {
       throw new Error('Token expired');
     }
-
-    return { userId: parseInt(userId, 10), exp: parseInt(exp, 10) };
+    return { userId: parseInt(userId), exp: parseInt(exp) };
   }
 
   static verifyRefreshToken(token) {
@@ -94,9 +93,9 @@ class AuthService {
     const expectedSignature = crypto.createHmac('sha256', REFRESH_SECRET_KEY).update(`${userId}.${exp}`).digest('hex');
     if (expectedSignature !== signature) throw new Error('Invalid refresh token');
     
-    if (Date.now() > parseInt(exp, 10)) throw new Error('Refresh token expired');
+    if (Date.now() > parseInt(exp)) throw new Error('Refresh token expired');
 
-    return { userId: parseInt(userId, 10), exp: parseInt(exp, 10) };
+    return { userId: parseInt(userId), exp: parseInt(exp) };
   }
   
 }
