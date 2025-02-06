@@ -4,12 +4,12 @@ const AuthService = require('../services/authService');
 class MainController {
   static async authenticateUser(req, res, next) {
     try {
-      const token = req.headers.authorization?.split(' ')[1]; 
+      const token = req.headers.authorization?.split(' ')[1];
       if (!token) {
         return res.status(401).json({ status: 'fail', message: 'Token not provided' });
       }
-      const decoded = AuthService.verifyToken(token); 
-      req.user = { id: decoded.userId }; 
+      const decoded = AuthService.verifyToken(token);
+      req.user = { id: decoded.userId };
       next();
     } catch (error) {
       console.error('Authentication error:', error.message);
@@ -18,41 +18,59 @@ class MainController {
   }
   static async getTasks(req, res) {
     try {
-      const userId = req.user?.id;
-      const status = req.query.status || 'all';
-  
-      if (!userId) {
-        return res.status(401).json({ status: 'fail', message: 'User not authenticated' });
-      }  
-      const tasks = await MainService.getTasks(userId, status);
-      console.log('Fetched tasks:', tasks); 
-      if (tasks && tasks.length > 0) {
-        if (!res.headersSent) {
-          return res.status(200).json({ status: 'success', data: tasks });
-        }
-      } else {
-        if (!res.headersSent) {
-          return res.status(404).json({ status: 'fail', message: 'No tasks found' });
-        }
+      const authorizationHeader = req.headers.authorization;
+      if (!authorizationHeader) {
+        return res.status(400).json({ status: 'fail', message: 'Authorization header is required' });
       }
+
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ status: 'fail', message: 'User not authenticated' });
+      }
+      const userId = req.user?.id;
+      let status = req.query.status; 
+  
+
+      status = status ? parseInt(status) : 0;
+      if (![0, 1].includes(status)) {
+        return res.status(400).json({ status: 'fail', message: 'Invalid status value' });
+      }
+  
+      console.log("Fetching tasks for user ID: ${userId} with status: ${status}");
+  
+      const tasks = await MainService.getTasks(userId, status);
+  
+      if (!tasks || tasks.length === 0) {
+        return res.status(404).json({ status: 'fail', message: 'No tasks found' });
+      }
+      tasks.forEach(task => {
+        task.status = parseInt(task.status); 
+      });
+      console.log('Fetched tasks:', tasks);
+      return res.status(200).json({ status: 'success', data: tasks }); 
     } catch (error) {
       console.error('Error fetching tasks in controller:', error.message);
-      if (!res.headersSent) {
-        return res.status(500).json({ status: 'fail', message: 'Could not fetch tasks' });
-      }
+      return res.status(500).json({ status: 'fail', message: 'Could not fetch tasks' });
     }
   }
+   
+  
+  
+
+
     
   static async createTask(req, res) {
   try {
     console.log('Received request to create task:', req.body);
-    const authorizationHeader = req.headers.authorization; 
+    const authorizationHeader = req.headers.authorization;
+    if (!authorizationHeader) {
+      return res.status(400).json({ status: 'fail', message: 'Authorization header is required' });
+    }
+
     if (!req.user || !req.user.id) {
       return res.status(401).json({ status: 'fail', message: 'User not authenticated' });
     }
-
     const { taskName } = req.body;
-    const userId = req.user.id; 
+    const userId = req.user.id;
     if (!taskName || taskName.trim() === '') {
       return res.status(400).json({ status: 'fail', message: 'Task name cannot be empty' });
     }
@@ -91,7 +109,7 @@ static async updateTask(req, res) {
     const payload = AuthService.verifyToken(token);  
     if (payload.userId !== userId) {
       console.error('Token user ID mismatch:', payload.userId, '!=', userId);
-      return res.status(403).json({ status: 'fail', message: 'Invalid user ID in token' });
+      return res.status(400).json({ status: 'fail', message: 'Invalid user ID in token' });
     }
     console.log('Verified user ID from token:', payload.userId);
     const updatedTask = await MainService.updateTask(userId, taskId, taskName, status);  
@@ -105,27 +123,33 @@ static async updateTask(req, res) {
     res.status(500).json({ status: 'fail', message: error.message });
   }
 }
-  static async deleteTask(req, res) {
-    try {
-      const authorizationHeader = req.headers.authorization;
-      const { taskId } = req.params;
-      const userId = req.user.id; 
-  
-      console.log(`Controller: Deleting task for user ID: ${userId}, Task ID: ${taskId}`);
-      if (!authorizationHeader) {
-        return res.status(400).json({ status: 'fail', message: 'Authorization header is required' });
-      }
-      const result = await MainService.deleteTask(userId, taskId, authorizationHeader);  
-      if (!result) {
-        return res.status(404).json({ status: 'fail', message: 'Task not found or you lack permission to delete it' });
-      }  
-      console.log('Controller: Task deleted successfully');
-      res.status(200).json({ status: 'success', message: 'Task deleted successfully' });
-    } catch (error) {
-      console.error('Controller Error deleting task:', error.message);
-      res.status(500).json({ status: 'fail', message: error.message });
+static async deleteTask(req, res) {
+  try {
+    const authorizationHeader = req.headers.authorization;
+    if (!authorizationHeader) {
+      return res.status(400).json({ status: 'fail', message: 'Authorization header is required' });
     }
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ status: 'fail', message: 'User not authenticated' });
+    }
+    const { taskId } = req.params;
+    const userId = req.user.id; 
+
+    console.log("Controller: Deleting task for user ID: ${userId}, Task ID: ${taskId}");
+    const result = await MainService.deleteTask(userId, taskId, authorizationHeader);  
+
+    if (!result) {
+      return res.status(404).json({ status: 'fail', message: 'Task not found or you lack permission to delete it' });
+    }
+
+    console.log('Controller: Task soft deleted successfully');
+    return res.status(200).json({ status: 'success', message: 'Task deleted successfully' });
+  } catch (error) {
+    console.error('Controller Error deleting task:', error.message);
+    return res.status(500).json({ status: 'fail', message: error.message });
   }
+}
+
   
 }  
 
