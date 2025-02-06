@@ -34,3 +34,5 @@ module.exports = {
     await queryInterface.dropTable('Users');
   }
 };
+
+//without down code you cannot use sequelize db:migrate:undo for undo migrations
