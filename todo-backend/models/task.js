@@ -21,12 +21,31 @@ const Task = sequelize.define('Tasks', {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
+      deleteFlag: {
+        type: DataTypes.INTEGER,
+        default: 0,
+      }
     },
     {
       sequelize,
-      tableName: 'Tasks', 
       timestamps: true,   
     }
   );
 
   module.exports = Task;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
