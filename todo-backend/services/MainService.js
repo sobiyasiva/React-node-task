@@ -15,13 +15,7 @@ class MainService {
       }
   
       console.log(`Fetching tasks for user ID: ${userId} with status: ${status}`);
-  
-      const tasks = await MainDAO.getTasks(userId, status);
-  
-      // tasks.forEach(task => {
-      //   console.log(`Service: Task ID: ${task.id}, Task Status: ${task.status === 0 ? 'In-progress' : task.status === 1 ? 'Completed' : 'Unknown'}`);
-      // });
-  
+      const tasks = await MainDAO.getTasks(userId, status);  
       console.log('Tasks fetched:', tasks);
       return tasks;
     } catch (error) {
