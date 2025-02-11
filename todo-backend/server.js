@@ -23,7 +23,7 @@ require('./routes/taskRoutes')(router);
 app.use('/api/user', router); 
 app.use('/api/task', router); 
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+app.listen(process.env.PORT, () => {
+  console.log(`Server running at http://localhost:${process.env.PORT}`);
 });
+
