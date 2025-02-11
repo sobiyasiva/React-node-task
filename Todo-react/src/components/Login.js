@@ -104,7 +104,7 @@ const Login = ({ setShowSignUp }) => {
             console.log('Toggling password visibility'); 
             setShowPassword(!showPassword);
           }}
-          aria-label={showPassword ? 'Hide password' : 'Show password'}
+          // aria-label={showPassword ? 'Hide password' : 'Show password'}
         >
           {showPassword ? <FaEye /> : <FaEyeSlash />}
         </button>
