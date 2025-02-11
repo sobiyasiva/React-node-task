@@ -15,10 +15,7 @@ class MainDAO {
         where: whereClause,
         order: [['createdAt', 'DESC']],
       });
-  
-      // tasks.forEach(task => {
-      //   console.log(`Task ID: ${task.id}, Task Status: ${task.status === 0 ? 'In-progress' : task.status === 1 ? 'Completed' : 'Unknown'}`);
-      // });
+
   
       return tasks;
     } catch (error) {
