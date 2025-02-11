@@ -114,7 +114,7 @@ const handleSaveTask = async (
     showToast("No changes made", "warning");
     setIsEditing(false);
     setTaskToEdit(null);
-    return;
+    return;                    
   }
 
   const isDuplicate = tasks.some(
@@ -149,23 +149,12 @@ const handleSaveTask = async (
       },
       body: JSON.stringify(newTask),
     });
-
-    if (response.status === 401) {
-      const newAccessToken = await refreshAccessToken();
-      if (!newAccessToken) return;
-
-      response = await fetch(endpoint, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${newAccessToken}`,
-          'UserId': userId,
-        },
-        body: JSON.stringify(newTask),
-      });
-    }
-
     const data = await response.json();
+        if (data.message === "Token expired") {
+          console.log("Token expired. Attempting to refresh...");
+          await refreshAccessToken();
+          return; 
+        }
     if (data.status === "success") {
       const updatedTask = {
         ...newTask,
@@ -191,9 +180,7 @@ const handleSaveTask = async (
         showToast("Task saved successfully", "success");
         setActiveTab('All');
       }
-    } else {
-      showToast(data.message, "failure");
-    }
+    } 
   } catch (error) {
     console.error("Error occurred during task save operation:", error);
     showToast("Error saving task", "failure");
@@ -221,33 +208,18 @@ const handleSaveTask = async (
           "Authorization": `Bearer ${accessToken}`,
           "UserId": userId,
         },
-      });
-  
-      if (response.status === 401) {
-        console.log("Access token expired. Attempting to refresh...");
-        const newAccessToken = await refreshAccessToken();  
-        if (!newAccessToken) {
-          console.log("Unable to refresh access token. Logging out...");
-          setShowLogin(true);  
-          return;
-        }
-  
-        response = await fetch("http://localhost:5000/api/task/gettasks", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${newAccessToken}`,
-            "UserId": userId,
-          },
-        });
-      }
-  
+      });  
       const data = await response.json();
       console.log("API response for tasks:", data);
-  
+  if (data.message === "Token expired") {
+    console.log("Token expired in API response. Refreshing token...");
+    await refreshAccessToken();
+    return; 
+  }
       if (data.status === "success") {
         const tasks = Array.isArray(data.data) ? data.data : [data.data];
         setTasks(tasks); 
+        
       } else {
         console.log("Failed to fetch tasks:", data.message);
       }
@@ -255,36 +227,6 @@ const handleSaveTask = async (
       console.log("Error while fetching tasks:", error);
     }
   };
-  
-  // const getRefreshToken = async () => {
-  //   console.log("Refreshing token...");
-  //   try {
-  //     const refreshToken = sessionStorage.getItem('refreshToken');
-  //     console.log("refreshToken:", refreshToken);
-  
-  //     const response = await fetch('http://localhost:5000/api/refresh-token', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${refreshToken}`,
-  //         'UserId': sessionStorage.getItem('userId'),
-  //       },
-  //     });  
-  //     const data = await response.json();
-  //     console.log("API response for token refresh:", data);
-  
-  //     if (data.status === "success") {
-  //       sessionStorage.setItem("accessToken", data.data.accessToken);
-  //       console.log("Token refreshed successfully.");
-  //     } else {
-  //       showToast(data.message, "failure");
-  //       handleLogout();
-  //     }
-  //   } catch (error) {
-  //     showToast("Error refreshing token", "failure");
-  //     console.log("Error refreshing token:", error);
-  //   }
-  // };
   const handleEditTask = (task) => {
     setIsEditing(true);
     setTaskToEdit(task);
@@ -320,6 +262,11 @@ const handleSaveTask = async (
       });
   
       const data = await response.json();
+    if (data.message === "Token expired") {
+      console.log("Token expired. Attempting to refresh...");
+      await refreshAccessToken();
+      return;  
+    }
       if (data.status === 'success') {
         showToast('Task deleted successfully', 'success');
         console.log('Task deleted successfully:', task);
@@ -337,22 +284,13 @@ const handleSaveTask = async (
   
   
   const handleToggleTaskStatus = async (task) => {
-    // Log the current status of the task before toggling
-    console.log(`Task "${task.taskName}" is currently in the "${task.status === 0 ? 'in-progress' : 'completed'}" status.`);
-  
-    // Toggle between in-progress (0) and completed (1) status
-    const newStatus = task.status === 0 ? 1 : 0; // If status is 0 (in-progress), change to 1 (completed), otherwise change to 0 (in-progress)
-  
-    // Log the new status that the task will be switched to
+    const newStatus = task.status === 0 ? 1 : 0; 
     const taskStatusText = newStatus === 1 ? 'completed' : 'in-progress';
     console.log(`Task "${task.taskName}" is switching to the "${taskStatusText}" status.`);
-  
-    // Confirmation message
     const message = newStatus === 1
       ? `Are you sure you want to mark the task "${task.taskName}" as completed?`
       : `Are you sure you want to mark the task "${task.taskName}" as in-progress?`;
   
-    // Set the task to toggle and show the confirmation modal
     setTaskToToggle({
       task,
       newStatus,
@@ -364,16 +302,10 @@ const handleSaveTask = async (
   const handleConfirmToggle = async () => {
     if (taskToToggle) {
       const { task, newStatus } = taskToToggle;
-  
-      // Update the task's status locally
       const updatedTask = { ...task, status: newStatus };
-  
-      // Update tasks list in state
       setTasks((prevTasks) => {
         return prevTasks.map((t) => (t.id === task.id ? updatedTask : t));
       });
-  
-      // Now make the request to update the task in the backend
       try {
         const accessToken = sessionStorage.getItem('accessToken');
         const userId = sessionStorage.getItem('userId');
@@ -391,9 +323,17 @@ const handleSaveTask = async (
         });
   
         const data = await response.json();
-  
+      if (data.message === "Token expired") {
+        console.log("Token expired. Attempting to refresh...");
+        await refreshAccessToken();
+        return;  
+      }
         if (data.status === "success") {
           showToast(`Task marked as ${newStatus === 1 ? 'Completed' : 'In-progress'} successfully`, "success");
+          // Automatically switch to the corresponding tab if not on "all" tab
+        if (activeTab !== "all") {
+          setActiveTab(newStatus === 1 ? "completed" : "in-progress");
+        }
         } else {
           showToast(data.message, "failure");
         }
@@ -427,16 +367,12 @@ const handleSaveTask = async (
     window.dispatchEvent(toastEvent);
   };
   const filteredTasks = tasks.filter((task) => {
-    const taskStatus = task.status; // Task status (0 for in-progress, 1 for completed)
-    const activeTabLower = activeTab.toLowerCase(); // Current tab being viewed (e.g., 'all', 'in-progress', 'completed')
-  
-    console.log(`Filtering tasks for ${activeTabLower} tab`);
-  
-    // Show tasks in all tabs if status matches
+    const taskStatus = task.status; 
+    const activeTabLower = activeTab.toLowerCase(); 
     return (
-      activeTabLower === 'all' || // All tasks (both in-progress and completed) should be shown in the 'all' tab
-      (activeTabLower === 'in-progress' && taskStatus === 0) || // Only in-progress tasks in the 'in-progress' tab
-      (activeTabLower === 'completed' && taskStatus === 1) // Only completed tasks in the 'completed' tab
+      activeTabLower === 'all' || 
+      (activeTabLower === 'in-progress' && taskStatus === 0) || 
+      (activeTabLower === 'completed' && taskStatus === 1)
     );
   });
   
